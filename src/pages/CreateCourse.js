@@ -5,6 +5,7 @@ const CreateCourse = () => {
     const [courseName, setCourseName] = React.useState('');
     const [courseDescription, setCourseDescription] = React.useState('');
     const [duration, setDuration] = React.useState("");
+    const BASE_URL = process.env.BASE_URL;
 
 
 

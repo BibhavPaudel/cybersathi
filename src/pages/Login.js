@@ -13,6 +13,7 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const BASE_URL = process.env.BASE_URL;
 
     const handleLogin = async (e) => {
       e.preventDefault();
