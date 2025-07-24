@@ -1,213 +1,179 @@
 import { useState } from "react";
-import { data, Link,useNavigate } from "react-router-dom";
-import M, { toast } from "materialize-css";
-import { Visibility, VisibilityOff} from '@mui/icons-material';
-
-
+import { Link, useNavigate } from "react-router-dom";
+import M from "materialize-css";
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import './login.css'; // Reusing the same CSS file
 
 const Signup = () => {
   const navigate = useNavigate();
-  // State variables for user input
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const BASE_URL = process.env.BASE_URL;
-
-  const registerUser = () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    // Here you would typically send the user data to your backend for registration
-   fetch(`${BASE_URL}/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        firstname: firstName,
-        lastname: lastName,
-        email: email,
-        password: password
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      console.log("cslog from signup.js fronted");
-      if (data.result) {
-        M.toast({html: `${data.result}`, classes: 'rounded green'});
-        navigate("/login");
-      } else {
-          M.toast({html: `${data.error}`, classes: `rounded red`});
-      }
-    })
-    .catch(error => {
-      console.log("Error:", error);
-    });
-  };
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:5000";
 
   const validateEmail = (email) => {
-    // Simple email regex
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
 
-  const handleSignup = () => {
+  const validatePassword = (password) => {
+    const errors = [];
+    if (password.length < 8) errors.push("Must be at least 8 characters");
+    if (!/[A-Z]/.test(password)) errors.push("Requires uppercase letter");
+    if (!/[a-z]/.test(password)) errors.push("Requires lowercase letter");
+    if (!/[0-9]/.test(password)) errors.push("Requires number");
+    if (!/[^A-Za-z0-9]/.test(password)) errors.push("Requires special character");
+    return errors;
+  };
+
+  const handleSignup = (e) => {
+    e.preventDefault();
+    
     if (!validateEmail(email)) {
       M.toast({ html: "Invalid email address", classes: "rounded red" });
       return;
     }
-    let passwordErrors = [];
-    if (password.length < 8) {
-      passwordErrors.push("Password must be at least 8 characters.");
-    }
-    if (!/[A-Z]/.test(password)) {
-      passwordErrors.push("Password must contain at least one uppercase letter.");
-    }
-    if (!/[a-z]/.test(password)) {
-      passwordErrors.push("Password must contain at least one lowercase letter.");
-    }
-    if (!/[0-9]/.test(password)) {
-      passwordErrors.push("Password must contain at least one number.");
-    }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      passwordErrors.push("Password must contain at least one special character.");
-    }
+
+    const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
-      M.toast({ html: passwordErrors.join("<br/>"), classes: "rounded red" });
+      M.toast({ 
+        html: `Password requirements:<br>• ${passwordErrors.join("<br>• ")}`, 
+        classes: "rounded red" 
+      });
       return;
     }
+
     if (password !== confirmPassword) {
-      M.toast({ html: "Passwords do not match", classes: "rounded red" });
+      M.toast({ html: "Passwords don't match", classes: "rounded red" });
       return;
     }
+
     registerUser();
   };
-  
 
-  // State to toggle password visibility
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const registerUser = () => {
+    fetch(`${BASE_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstname: firstName,
+        lastname: lastName,
+        email,
+        password
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.result) {
+        M.toast({ html: data.result, classes: 'rounded green' });
+        navigate("/login");
+      } else {
+        M.toast({ html: data.error, classes: 'rounded red' });
+      }
+    })
+    .catch(err => {
+      M.toast({ html: "Registration failed", classes: 'rounded red' });
+      console.error("Error:", err);
+    });
+  };
 
   return (
-    <div>
-      <div
-        className="row"
-        style={{
-          marginTop: "50px",
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "80vh",
-        }}
-      >
-        <div
-          className="card"
-          style={{
-            width: "400px",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <h3>Signup</h3>
-          <div className="card-content" style={{ width: "100%" }}>
+    <div className="login-page">
+      <div className="login-container">
+        <h2>Create Account</h2>
+        
+        <form onSubmit={handleSignup} className="login-form">
+          <div className="input-group">
+            <label>Name</label>
             <input
               type="text"
-              placeholder="First Name"
-              className="validate"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Enter your  name"
+              required
             />
-            <input
-              type="text"
-              placeholder="Last Name"
-              className="validate"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
+          </div>
+
+        
+
+          <div className="input-group">
+            <label>Email</label>
             <input
               type="email"
-              placeholder="Email"
-              required
-              className="validate"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
             />
-            <div style={{ position: "relative" }}>
+          </div>
+
+          <div className="input-group">
+            <label>Password</label>
+            <div className="password-input">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                className="validate"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingRight: "40px" }}
+                placeholder="Create password"
+                required
               />
-              <span
-                onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  color: "#888",
-                  userSelect: "none",
-                }}
-                title={showPassword ? "Hide password" : "Show password"}
+              <span 
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? (
-                  <i className="material-icons"><VisibilityOff/></i>
-                ) : (
-                  <i className="material-icons"><Visibility/></i>
-                )}
-              </span>
-            </div>
-            <div style={{ position: "relative" }}>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm password"
-                className="validate"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{ paddingRight: "40px" }}
-              />
-              <span
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  color: "#888",
-                  userSelect: "none",
-                }}
-                title={showConfirmPassword ? "Hide password" : "Show password"}
-              >
-                {showConfirmPassword ? (
-                  <i className="material-icons"><VisibilityOff/></i>
-                ) : (
-                  <i className="material-icons"><Visibility/></i>
-                )}
+                {showPassword ? <VisibilityOff /> : <Visibility />}
               </span>
             </div>
           </div>
-          <button className="waves-effect waves-light btn" onClick={handleSignup}>
-            Signup
+
+          <div className="input-group">
+            <label>Confirm Password</label>
+            <div className="password-input">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+                required
+              />
+              <span 
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </span>
+            </div>
+          </div>
+
+          <div className="password-requirements">
+            <p>Password must contain:</p>
+            <ul>
+              <li className={password.length >= 8 ? 'valid' : ''}>8+ characters</li>
+              <li className={/[A-Z]/.test(password) ? 'valid' : ''}>Uppercase letter</li>
+              <li className={/[a-z]/.test(password) ? 'valid' : ''}>Lowercase letter</li>
+              <li className={/[0-9]/.test(password) ? 'valid' : ''}>Number</li>
+              <li className={/[^A-Za-z0-9]/.test(password) ? 'valid' : ''}>Special character</li>
+            </ul>
+          </div>
+
+          <button
+            type="submit"
+            className="login-button"
+          >
+            Sign Up
           </button>
-          <h6>
-            Already have an account? <Link to="/login">Login</Link>
-          </h6>
-        </div>
+        </form>
+
+        <p className="signup-link">
+          Already have an account? <Link to="/login" className="signup-text">Login</Link>
+        </p>
       </div>
     </div>
   );
-}
+};
 
 export default Signup;
